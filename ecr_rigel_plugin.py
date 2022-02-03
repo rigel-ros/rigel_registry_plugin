@@ -4,6 +4,7 @@ import os
 from boto3 import client as aws_client
 from botocore.exceptions import ClientError
 from dataclasses import dataclass, field
+from rigel.loggers import DockerLogPrinter, MessageLogger
 from typing import Dict
 
 
@@ -22,13 +23,13 @@ class Plugin:
         # Ensure no declared field was left undefined.
         for field_name, field_value in self.__dict__.items():
             if field_value is None:
-                print(f"Field '{field_name}' was declared but left undefined.")
+                MessageLogger.error(f"Field '{field_name}' was declared but left undefined.")
                 exit(1)
 
         # Ensure required credentials were provided.
         for credential in ['access_key', 'secret_access_key']:
             if self.credentials.get(credential) is None:
-                print(f"Missing credentials or invalid value.")
+                MessageLogger.error(f"Missing credentials or invalid value.")
                 exit(1)
 
         self.registry = f'{self.account}.dkr.ecr.{self.region}.amazonaws.com'
@@ -47,7 +48,7 @@ class Plugin:
             tag=new_image_tag
         )
 
-        print(f"Set tag for Docker image '{self.image}' .")
+        MessageLogger.info(f"Set tag for Docker image {self.image} .")
 
     def authenticate(self, docker_client: docker.api.client.APIClient) -> None:
 
@@ -66,7 +67,7 @@ class Plugin:
             self.__token = base64.b64decode(token).replace(b'AWS:', b'').decode('utf-8')
 
         except ClientError:
-            print('Invalid AWS credentials.')
+            MessageLogger.error('Invalid AWS credentials.')
             exit(1)
 
         # Authenticate with AWS ECR.
@@ -76,7 +77,7 @@ class Plugin:
             registry=self.registry
         )
 
-        print(f'Authenticated with AWS ECR ({self.registry})')
+        MessageLogger.info(f'Authenticated with AWS ECR ({self.registry}).')
 
     def deploy(self, docker_client: docker.api.client.APIClient) -> None:
 
@@ -92,19 +93,20 @@ class Plugin:
             }
         )
 
+        printer = DockerLogPrinter()
+
         iterator = iter(image)
         while True:
             try:
                 log = next(iterator)
-                if 'progess' in log:
-                    print(log['progress'].strip('\n'))
+                printer.log(log)
 
             except StopIteration:  # pushing operation finished
                 if 'error' in log:
-                    print(f'An error occurred while pushing image {complete_image_name} to AWS ECR.')
+                    MessageLogger.error(f'An error occurred while pushing image {complete_image_name} to AWS ECR.')
                 else:
-                    print(f'Image {complete_image_name} was pushed with success to AWS ECR.')
+                    MessageLogger.info(f'Image {complete_image_name} was pushed with success to AWS ECR.')
                 break
 
             except ValueError:
-                print(f'Unable to parse log message while pushing Docker image ({complete_image_name}): {log}')
+                MessageLogger.warning(f'Unable to parse log message while pushing Docker image ({complete_image_name}): {log}')
