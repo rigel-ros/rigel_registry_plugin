@@ -5,7 +5,7 @@ with open('./README.md', 'r') as readme:
 
 setuptools.setup(
     name='ecr_rigel_plugin',
-    version='0.0.2',
+    version='0.0.3',
     author='Pedro Melo',
     author_email='pedro.m.melo@inesctec.pt',
     description='A plugin for Rigel to ease the deployment of Docker images to AWS ECR.',
