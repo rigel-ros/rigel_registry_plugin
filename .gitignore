@@ -78,6 +78,7 @@ ignore log files someone is creating
 .idea/
 .vscode/
 
-#ignore Python build related
-dist/
-*.egg-info/
+#ignore Python related folders
+.coverage
+.mypy_cache
+.pytest_cache/
