@@ -137,7 +137,7 @@ class Plugin:
 
             # Decode ECR authentication token.
             encoded_token = aws_ecr.get_authorization_token()['authorizationData'][0]['authorizationToken']
-            self.__token = base64.b64decode(encoded_token).replace(b'AWS:', b'').decode('utf-8')
+            self.token = base64.b64decode(encoded_token).replace(b'AWS:', b'').decode('utf-8')
 
         except ClientError:
             raise InvalidAWSCredentialsError()
@@ -146,7 +146,7 @@ class Plugin:
         try:
             docker_client.login(
                 username=self.user,
-                password=self.__token,
+                password=self.token,
                 registry=self.registry
             )
         except docker.errors.APIError:
@@ -169,7 +169,7 @@ class Plugin:
             decode=True,
             auth_config={
                 'username': self.user,
-                'password': self.__token
+                'password': self.token
             }
         )
 

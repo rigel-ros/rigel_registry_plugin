@@ -1,10 +1,17 @@
+import base64
 import copy
+from distutils.log import error
 import docker
 import unittest
+from typing import Type
+from botocore.exceptions import ClientError
 from ecr_rigel_plugin import (
     __version__,
-    InvalidDockerImageNameError,
     DockerImageNotFoundError,
+    DockerPushError,
+    InvalidAWSCredentialsError,
+    InvalidDockerImageNameError,
+    InvalidImageRegistryError,
     UndefinedEnvironmentVariableError,
     Plugin
 )
@@ -104,6 +111,94 @@ class PluginTesting(unittest.TestCase):
             plugin.authenticate(MagicMock())
         self.assertEqual(context.exception.kwargs['var'], 'TEST_SECRET_ACCESS_KEY')
 
+    @patch('ecr_rigel_plugin.ecr_rigel_plugin.aws_client')
+    @patch('ecr_rigel_plugin.ecr_rigel_plugin.os.environ.get')
+    def test_invalid_credentials_error(self, environ_mock: Mock, aws_mock: Mock) -> None:
+        """
+        Test if InvalidAWSCredentialsError is thrown if the AWS ECR credentials
+        are not valid.
+        """
+
+        def stop(*args, **kwargs) -> None:
+            raise ClientError(
+                error_response=MagicMock(),
+                operation_name=MagicMock()
+            )
+
+        environ_mock.return_value = 'test_value'
+        aws_mock.side_effect = stop
+
+        with self.assertRaises(InvalidAWSCredentialsError):
+            plugin = Plugin(**self.base_plugin_data)
+            plugin.authenticate(MagicMock())
+
+    @patch('ecr_rigel_plugin.ecr_rigel_plugin.aws_client')
+    @patch('ecr_rigel_plugin.ecr_rigel_plugin.os.environ.get')
+    def test_token_decoding(self, environ_mock: Mock, aws_mock: Mock) -> None:
+        """
+        Test if AWS ECR token is properly decoded.
+        """
+        environ_mock.return_value = 'test_value'
+
+        decoded_test_token = 'test_token'
+        aws_ecr_mock = MagicMock()
+        aws_ecr_mock.get_authorization_token.return_value = {
+            'authorizationData': [
+                {
+                    'authorizationToken': base64.b64encode(f'AWS:{decoded_test_token}'.encode())
+                }
+            ]
+        }
+        aws_mock.return_value = aws_ecr_mock
+
+        plugin = Plugin(**self.base_plugin_data)
+        plugin.authenticate(MagicMock())
+
+        self.assertEqual(plugin.token, decoded_test_token)
+
+    @patch('ecr_rigel_plugin.ecr_rigel_plugin.aws_client')
+    @patch('ecr_rigel_plugin.ecr_rigel_plugin.os.environ.get')
+    def test_invalid_registry_error(self, environ_mock: Mock, aws_mock: Mock) -> None:
+        """
+        Test if InvalidImageRegistryError is thrown whenever
+        an invalid registry is provided.
+        """
+        environ_mock.return_value = 'test_value'
+
+        aws_ecr_mock = MagicMock()
+        aws_ecr_mock.get_authorization_token.return_value = {
+            'authorizationData': [
+                {
+                    'authorizationToken': base64.b64encode(f'AWS:test_token'.encode())
+                }
+            ]
+        }
+        aws_mock.return_value = aws_ecr_mock
+
+        docker_client_mock = MagicMock()
+        docker_client_mock.login.side_effect = docker.errors.APIError(message='Test error message.')
+
+        with self.assertRaises(InvalidImageRegistryError) as context:
+            plugin = Plugin(**self.base_plugin_data)
+            plugin.authenticate(docker_client_mock)
+
+        self.assertEqual(context.exception.kwargs['registry'], plugin.registry)
+
+    def test_docker_push_error(self) -> None:
+        """
+        Test if DockerPushError is thrown if an error occurs while
+        pushing Docker image.
+        """
+        error_message = 'Test error message.'
+
+        docker_client_mock = MagicMock()
+        docker_client_mock.push.return_value = [{'error': error_message}]
+
+        with self.assertRaises(DockerPushError) as context:
+            plugin = Plugin(**self.base_plugin_data)
+            plugin.token = 'test_token'
+            plugin.deploy(docker_client_mock)
+        self.assertEqual(context.exception.kwargs['msg'], error_message)
 
 
 if __name__ == '__main__':
