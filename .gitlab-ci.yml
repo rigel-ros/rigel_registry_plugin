@@ -15,4 +15,5 @@ release_job:
     - apk update && apk add --no-cache build-base cargo gcc libffi-dev libressl-dev musl-dev openssl-dev python3 python3-dev py3-pip
     - pip3 install poetry
   script:
+    - poetry build
     - poetry publish --repository gitlab -u gitlab-ci-token -p ${CI_JOB_TOKEN}
