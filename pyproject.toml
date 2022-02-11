@@ -23,7 +23,7 @@ classifiers = [
 python = "^3.8"
 boto3 = "^1.20.52"
 docker = "^5.0.3"
-rigel = {git = "https://gitlab.inesctec.pt/pedro.m.melo/rigel.git"}
+rigel = {git = "ssh://git@gitlab.inesctec.pt/pedro.m.melo/rigel.git"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0.0"
