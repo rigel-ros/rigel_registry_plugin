@@ -16,4 +16,4 @@ release_job:
     - pip3 install poetry
   script:
     - poetry build
-    - poetry publish --repository gitlab -u gitlab-ci-token -p ${CI_JOB_TOKEN}
+    - poetry publish --repository gitlab -u ${CI_USER} -p ${CI_PASSWORD}
