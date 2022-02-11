@@ -79,6 +79,7 @@ ignore log files someone is creating
 .vscode/
 
 #ignore Python related folders
+dist
 .nox
 .coverage
 .mypy_cache
