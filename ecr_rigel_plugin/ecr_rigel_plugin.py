@@ -19,7 +19,7 @@ from rigel.loggers import DockerLogPrinter, MessageLogger
 from typing import Dict
 
 
-def create_docker_client(self) -> docker.api.client.APIClient:  # pragma: no cover
+def create_docker_client() -> docker.api.client.APIClient:  # pragma: no cover
     """
     Create a Docker client instance.
 
