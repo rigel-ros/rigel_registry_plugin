@@ -22,6 +22,7 @@ class InvalidDockerImageNameError(RigelError):
     base = "Invalid Docker image name '{image}'."
     code = 51
 
+
 class InvalidAWSCredentialsError(RigelError):
     """
     Raised whenever an attempt is made to authenticate with AWS ECR using invalid access credentials.
@@ -50,6 +51,7 @@ class InvalidImageRegistryError(RigelError):
     """
     base = "Invalid Docker registry '{registry}'."
     code = 54
+
 
 class DockerPushError(RigelError):
     """

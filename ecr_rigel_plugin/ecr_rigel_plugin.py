@@ -19,7 +19,7 @@ from rigel.loggers import DockerLogPrinter, MessageLogger
 from typing import Dict
 
 
-def create_docker_client(self) -> docker.api.client.APIClient:
+def create_docker_client(self) -> docker.api.client.APIClient:  # pragma: no cover
     """
     Create a Docker client instance.
 
@@ -84,7 +84,7 @@ class Plugin:
 
         # Ensure required credentials were provided.
         for credential in ['access_key', 'secret_access_key']:
-            if self.credentials.get(credential)is None:
+            if self.credentials.get(credential) is None:
                 raise MissingRequiredFieldError(field=f"credentials[{credential}]")
 
         # 'Registry' field can now be infered from existing data.
@@ -192,7 +192,7 @@ class Plugin:
                 break
 
             except ValueError:
-                MessageLogger.warning(f'Unable to parse log message while pushing Docker image ({complete_image_name}): {log}')
+                MessageLogger.warning(f'Unable to parse log message: {log}')
 
     def run(self) -> None:
         """

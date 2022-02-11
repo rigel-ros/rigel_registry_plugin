@@ -1,9 +1,7 @@
 import base64
 import copy
-from distutils.log import error
 import docker
 import unittest
-from typing import Type
 from botocore.exceptions import ClientError
 from ecr_rigel_plugin import (
     __version__,
@@ -17,6 +15,7 @@ from ecr_rigel_plugin import (
 )
 from rigel.exceptions import MissingRequiredFieldError
 from unittest.mock import MagicMock, Mock, patch
+
 
 class PluginTesting(unittest.TestCase):
 
@@ -53,7 +52,7 @@ class PluginTesting(unittest.TestCase):
             Plugin(**plugin_data)
         self.assertEqual(context.exception.kwargs['field'], 'credentials[access_key]')
 
-    def test_missing_credentials_access_key(self) -> None:
+    def test_missing_credentials_secret_access_key(self) -> None:
         """
         Test if MissingRequiredFieldError is thrown if credentials['secret_access_key'] is not defined.
         """
@@ -169,7 +168,7 @@ class PluginTesting(unittest.TestCase):
         aws_ecr_mock.get_authorization_token.return_value = {
             'authorizationData': [
                 {
-                    'authorizationToken': base64.b64encode(f'AWS:test_token'.encode())
+                    'authorizationToken': base64.b64encode('AWS:test_token'.encode())
                 }
             ]
         }
