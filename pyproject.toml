@@ -41,3 +41,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.report]
 fail_under = 90
+
+[virtualenvs]
+in-project = true
+
+[repositories]
+[repositories.gitlab]
+url = "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi"
