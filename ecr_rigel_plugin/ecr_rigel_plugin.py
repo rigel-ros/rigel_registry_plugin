@@ -11,12 +11,12 @@ from .exceptions import (
 )
 from boto3 import client as aws_client
 from botocore.exceptions import ClientError
-from dataclasses import dataclass, field
+from pydantic import BaseModel, PrivateAttr, validator
 from rigel.exceptions import (
     MissingRequiredFieldError,
 )
 from rigel.loggers import DockerLogPrinter, MessageLogger
-from typing import Dict
+from typing import Dict, Optional
 
 
 def create_docker_client() -> docker.api.client.APIClient:  # pragma: no cover
@@ -29,8 +29,7 @@ def create_docker_client() -> docker.api.client.APIClient:  # pragma: no cover
     return docker.from_env().api
 
 
-@dataclass
-class Plugin:
+class Plugin(BaseModel):
     """
     A plugin for Rigel to deploy Docker images to AWS ECR.
 
@@ -57,8 +56,12 @@ class Plugin:
     region: str
 
     # List of optional fields.
-    local_image: str = field(default_factory=lambda: 'rigel:temp')
-    user: str = field(default_factory=lambda: 'AWS')
+    local_image: str = 'rigel:temp'
+    user: str = 'AWS'
+    registry: Optional[str] = None
+
+    # List of private fields.
+    _token: str = PrivateAttr()
 
     def __get_env_var_value(self, var: str) -> str:
         """
@@ -74,21 +77,21 @@ class Plugin:
             raise UndefinedEnvironmentVariableError(var=var)
         return value
 
-    def __post_init__(self) -> None:
+    @validator('credentials', always=True)
+    def ensure_credentials_provided(cls, credentials):  # type: ignore[no-untyped-def]
         """
-        Ensure that provided data is valid.
+        Ensure required credentials were provided.
         """
-
-        # NOTE: there's no need to check for undeclared fields
-        # as the main Rigelfile parser already does that.
-
-        # Ensure required credentials were provided.
         for credential in ['access_key', 'secret_access_key']:
-            if self.credentials.get(credential) is None:
+            if credentials.get(credential) is None:
                 raise MissingRequiredFieldError(field=f"credentials[{credential}]")
+        return credentials
 
-        # 'Registry' field can now be infered from existing data.
-        self.registry = f'{self.account}.dkr.ecr.{self.region}.amazonaws.com'
+    @validator('registry', always=True)
+    def ensure_default_registry(cls, registry, values):  # type: ignore[no-untyped-def]
+        if registry is None:
+            return f"{values['account']}.dkr.ecr.{values['region']}.amazonaws.com"
+        return registry
 
     def tag(self, docker_client: docker.api.client.APIClient) -> None:
         """
@@ -137,7 +140,7 @@ class Plugin:
 
             # Decode ECR authentication token.
             encoded_token = aws_ecr.get_authorization_token()['authorizationData'][0]['authorizationToken']
-            self.token = base64.b64decode(encoded_token).replace(b'AWS:', b'').decode('utf-8')
+            self._token = base64.b64decode(encoded_token).replace(b'AWS:', b'').decode('utf-8')
 
         except ClientError:
             raise InvalidAWSCredentialsError()
@@ -146,7 +149,7 @@ class Plugin:
         try:
             docker_client.login(
                 username=self.user,
-                password=self.token,
+                password=self._token,
                 registry=self.registry
             )
         except docker.errors.APIError:
@@ -169,7 +172,7 @@ class Plugin:
             decode=True,
             auth_config={
                 'username': self.user,
-                'password': self.token
+                'password': self._token
             }
         )
 

@@ -1,5 +1,5 @@
 ---
-# Run linter.
+# Run Flake8 linter.
 repos:
 - repo: https://gitlab.com/pycqa/flake8
   rev: 3.9.2
@@ -7,7 +7,7 @@ repos:
   - id: flake8
     additional_dependencies: [flake8-bugbear]
 
-# Local hook to run tests.
+# Run unit tests with Pytest.
 - repo: local
   hooks:
   - id: tests
@@ -17,8 +17,8 @@ repos:
     types: [python]
     pass_filenames: false
 
-# Type check code.
-# - repo: https://github.com/pre-commit/mirrors-mypy
-#   rev: 'v0.931 '
-#   hooks:
-#   - id: mypy
+# Type check code with MyPy.
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: 'v0.931'
+  hooks:
+  - id: mypy

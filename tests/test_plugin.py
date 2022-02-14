@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, Mock, patch
 class PluginTesting(unittest.TestCase):
 
     base_plugin_data = {
-        'account': 'test_acount',
+        'account': 123456789,
         'image': 'test_image',
         'local_image': 'test_local_image',
         'region': 'test_region',
@@ -47,7 +47,7 @@ class PluginTesting(unittest.TestCase):
         Test if MissingRequiredFieldError is thrown if credentials['access_key'] is not defined.
         """
         plugin_data = copy.deepcopy(self.base_plugin_data)
-        plugin_data['credentials'].pop('access_key')
+        plugin_data['credentials'].pop('access_key')  # type: ignore[attr-defined]
         with self.assertRaises(MissingRequiredFieldError) as context:
             Plugin(**plugin_data)
         self.assertEqual(context.exception.kwargs['field'], 'credentials[access_key]')
@@ -57,7 +57,7 @@ class PluginTesting(unittest.TestCase):
         Test if MissingRequiredFieldError is thrown if credentials['secret_access_key'] is not defined.
         """
         plugin_data = copy.deepcopy(self.base_plugin_data)
-        plugin_data['credentials'].pop('secret_access_key')
+        plugin_data['credentials'].pop('secret_access_key')  # type: ignore[attr-defined]
         with self.assertRaises(MissingRequiredFieldError) as context:
             Plugin(**plugin_data)
         self.assertEqual(context.exception.kwargs['field'], 'credentials[secret_access_key]')
@@ -118,7 +118,7 @@ class PluginTesting(unittest.TestCase):
         are not valid.
         """
 
-        def stop(*args, **kwargs) -> None:
+        def stop(*args, **kwargs) -> None:  # type: ignore[no-untyped-def]
             raise ClientError(
                 error_response=MagicMock(),
                 operation_name=MagicMock()
@@ -153,7 +153,7 @@ class PluginTesting(unittest.TestCase):
         plugin = Plugin(**self.base_plugin_data)
         plugin.authenticate(MagicMock())
 
-        self.assertEqual(plugin.token, decoded_test_token)
+        self.assertEqual(plugin._token, decoded_test_token)
 
     @patch('ecr_rigel_plugin.ecr_rigel_plugin.aws_client')
     @patch('ecr_rigel_plugin.ecr_rigel_plugin.os.environ.get')
@@ -195,7 +195,7 @@ class PluginTesting(unittest.TestCase):
 
         with self.assertRaises(DockerPushError) as context:
             plugin = Plugin(**self.base_plugin_data)
-            plugin.token = 'test_token'
+            plugin._token = 'test_token'
             plugin.deploy(docker_client_mock)
         self.assertEqual(context.exception.kwargs['msg'], error_message)
 
