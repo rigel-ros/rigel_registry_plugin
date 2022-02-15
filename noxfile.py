@@ -13,7 +13,6 @@ def tests(session: nox.sessions.Session) -> None:
 # Run flake8 linter.
 @nox.session
 def lint(session: nox.sessions.Session) -> None:
-    print(session)
     session.install("poetry")
     session.run("poetry", "install")
     session.run("flake8", ".")
