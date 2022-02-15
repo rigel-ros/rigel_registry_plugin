@@ -119,7 +119,8 @@ class Plugin(BaseModel):
         except docker.errors.ImageNotFound:
             raise DockerImageNotFoundError(image=self.image)
 
-        MessageLogger.info(f"Changed Docker image tag to '{self.local_image}'.")
+        logger = MessageLogger()
+        logger.info(f"Changed Docker image tag to '{self.local_image}'.")
 
     def authenticate(self, docker_client: docker.api.client.APIClient) -> None:
         """
@@ -155,7 +156,8 @@ class Plugin(BaseModel):
         except docker.errors.APIError:
             raise InvalidImageRegistryError(registry=self.registry)
 
-        MessageLogger.info(f'Authenticated with AWS ECR ({self.registry}).')
+        logger = MessageLogger()
+        logger.info(f'Authenticated with AWS ECR ({self.registry}).')
 
     def deploy(self, docker_client: docker.api.client.APIClient) -> None:
         """
@@ -191,11 +193,13 @@ class Plugin(BaseModel):
                 if 'error' in log:
                     raise DockerPushError(msg=log['error'])
                 else:
-                    MessageLogger.info(f'Image {complete_image_name} was pushed with success to AWS ECR.')
+                    message = MessageLogger()
+                    message.info(f'Image {complete_image_name} was pushed with success to AWS ECR.')
                 break
 
             except ValueError:
-                MessageLogger.warning(f'Unable to parse log message: {log}')
+                message = MessageLogger()
+                message.warning(f'Unable to parse log message: {log}')
 
     def run(self) -> None:
         """
