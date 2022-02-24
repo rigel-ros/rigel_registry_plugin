@@ -53,7 +53,10 @@ class GenericDockerRegistryPlugin(BaseModel):
 
         super().__init__(*args, **kwargs)
 
-        self._complete_image_name = f"{self.registry}/{self.image}"
+        if self.registry:
+            self._complete_image_name = f"{self.registry}/{self.image}"
+        else:
+            self._complete_image_name = self.image
 
     def tag(self) -> None:
         """

@@ -25,7 +25,7 @@ class Plugin:
         self.args: Any = args
         self.kwargs: Any = kwargs
 
-        registry_name = kwargs.get('registry') or ''
+        registry_name = kwargs.get('registry') or ''  # defaults to DockerHub
 
         if registry_name == 'ecr':
             self.plugin_type = ECRPlugin
