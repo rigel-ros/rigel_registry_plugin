@@ -23,6 +23,7 @@ class ECRPluginTesting(unittest.TestCase):
         'image': 'test_image',
         'region': 'test_region',
         'local_image': 'test_local_image',
+        'user': 'test_user',
 
         # Injected fields.
         'docker_client': MagicMock(),
@@ -85,7 +86,6 @@ class ECRPluginTesting(unittest.TestCase):
             plugin = ECRPlugin(*[], **self.base_plugin_data)
             plugin.authenticate()
 
-    # TODO: finish testings.
     @patch('registry_rigel_plugin.registries.ecr.aws_client')
     @patch('registry_rigel_plugin.registries.ecr.os.environ.get')
     def test_token_decoding(self, environ_mock: Mock, aws_mock: Mock) -> None:
@@ -109,6 +109,41 @@ class ECRPluginTesting(unittest.TestCase):
         plugin.authenticate()
 
         self.assertEqual(plugin._token, decoded_test_token)
+
+    @patch('registry_rigel_plugin.registries.ecr.aws_client')
+    @patch('registry_rigel_plugin.registries.ecr.os.environ.get')
+    def test_authenticate_call(self, environ_mock: Mock, aws_mock: Mock) -> None:
+        """
+        Test if function 'authenticate' interfaces as expected with rigelcore.clients.DockerClient class.
+        """
+        environ_mock.return_value = 'test_value'
+
+        docker_mock = MagicMock()
+        test_data = copy.deepcopy(self.base_plugin_data)
+        test_data['docker_client'] = docker_mock
+
+        decoded_test_token = 'test_token'
+        aws_ecr_mock = MagicMock()
+        aws_ecr_mock.get_authorization_token.return_value = {
+            'authorizationData': [
+                {
+                    'authorizationToken': base64.b64encode(f'AWS:{decoded_test_token}'.encode())
+                }
+            ]
+        }
+        aws_mock.return_value = aws_ecr_mock
+
+        plugin = ECRPlugin(*[], **test_data)
+        plugin.authenticate()
+
+        docker_mock.login.assert_called_once_with(
+            "{}.dkr.ecr.{}.amazonaws.com".format(
+                test_data['account'],
+                test_data['region']
+            ),
+            test_data['user'],
+            decoded_test_token,
+        )
 
     def test_deploy_tag(self) -> None:
         """

@@ -119,7 +119,7 @@ class ECRPlugin(BaseModel):
             raise InvalidAWSCredentialsError()
 
         # Authenticate with AWS ECR.registry
-        self._docker_client.login(self.user, self._token, self._registry)
+        self._docker_client.login(self._registry, self.user, self._token)
 
     def deploy(self) -> None:
         """
@@ -132,7 +132,7 @@ class ECRPlugin(BaseModel):
         Plugin entrypoint.
         """
         self.tag()
-        self._logger.info(f"Changed Docker image tag to {self.local_image}.")
+        self._logger.info(f"Created Docker image {self.image} from {self.local_image}.")
 
         self.authenticate()
         self._logger.info(f'Authenticated with AWS ECR ({self._registry}).')

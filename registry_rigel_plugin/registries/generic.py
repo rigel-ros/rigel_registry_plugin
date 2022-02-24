@@ -107,7 +107,10 @@ class GenericDockerRegistryPlugin(BaseModel):
         self._logger.info(f"Created Docker image {self.image} from {self.local_image}.")
 
         self.authenticate()
-        self._logger.info(f"Authenticated with Docker image registry {self.registry}.")
+        self._logger.info(f"Authenticated with Docker image registry {self.registry or 'DockerHub'}.")
 
         self.deploy()
-        self._logger.info(f"Docker image {self._complete_image_name} was pushed with sucess to {self.registry}.")
+        self._logger.info("Docker image {} was pushed with sucess to {}.".format(
+            self._complete_image_name,
+            self.registry or 'DockerHub'
+        ))
