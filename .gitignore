@@ -83,4 +83,5 @@ dist
 .nox
 .coverage
 .mypy_cache
-.pytest_cache/
+.pytest_cache
+.venv
