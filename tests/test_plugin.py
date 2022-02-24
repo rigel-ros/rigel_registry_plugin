@@ -1,203 +1,92 @@
-import base64
-import copy
-import docker
+import inspect
 import unittest
-from botocore.exceptions import ClientError
-from ecr_rigel_plugin import (
-    __version__,
-    DockerImageNotFoundError,
-    DockerPushError,
-    InvalidAWSCredentialsError,
-    InvalidDockerImageNameError,
-    InvalidImageRegistryError,
-    UndefinedEnvironmentVariableError,
-    Plugin
+from registry_rigel_plugin import Plugin
+from registry_rigel_plugin.exceptions import UnsupportedDockerRegistryError
+from registry_rigel_plugin.registries import (
+    ECRPlugin,
+    GenericDockerRegistryPlugin
 )
-from rigel.exceptions import MissingRequiredFieldError
+from rigelcore.exceptions import MissingRequiredFieldError
 from unittest.mock import MagicMock, Mock, patch
 
 
 class PluginTesting(unittest.TestCase):
+    """
+    Test suite for the registry_rigel_plugin.Plugin class.
+    """
 
-    base_plugin_data = {
-        'account': 123456789,
-        'image': 'test_image',
-        'local_image': 'test_local_image',
-        'region': 'test_region',
-        'credentials': {
-            'access_key': 'TEST_ACCESS_KEY',
-            'secret_access_key': 'TEST_SECRET_ACCESS_KEY'
-        },
-    }
-
-    def test_version(self) -> None:
-        """
-        Basic test to ensure that plugin version is as expected.
-        """
-        self.assertEqual(__version__, '0.1.0')
-
-    def test_run_exists(self) -> None:
+    def test_compliant(self) -> None:
         """
         Ensure that Plugin class has required 'run' function.
         """
         self.assertTrue('run' in Plugin.__dict__)
 
-    def test_missing_credentials_access_key(self) -> None:
+        signature = inspect.signature(Plugin.run)
+        self.assertEqual(len(signature.parameters), 1)
+
+    def test_missing_required_field_error(self) -> None:
         """
-        Test if MissingRequiredFieldError is thrown if credentials['access_key'] is not defined.
+        Ensure that instances of MissingRequiredFieldError are thrown
+        if field 'registry' is not provided to the plugin.
         """
-        plugin_data = copy.deepcopy(self.base_plugin_data)
-        plugin_data['credentials'].pop('access_key')  # type: ignore[attr-defined]
         with self.assertRaises(MissingRequiredFieldError) as context:
-            Plugin(**plugin_data)
-        self.assertEqual(context.exception.kwargs['field'], 'credentials[access_key]')
+            Plugin(*[], **{})
+        self.assertEqual(context.exception.kwargs['field'], 'registry')
 
-    def test_missing_credentials_secret_access_key(self) -> None:
+    def test_unsupported_docker_registry_error(self) -> None:
         """
-        Test if MissingRequiredFieldError is thrown if credentials['secret_access_key'] is not defined.
+        Ensure that instances of UnsupportedDockerRegistryError are thrown
+        if an unsupported registry in specified.
         """
-        plugin_data = copy.deepcopy(self.base_plugin_data)
-        plugin_data['credentials'].pop('secret_access_key')  # type: ignore[attr-defined]
-        with self.assertRaises(MissingRequiredFieldError) as context:
-            Plugin(**plugin_data)
-        self.assertEqual(context.exception.kwargs['field'], 'credentials[secret_access_key]')
+        test_registry = 'test_registry'
+        with self.assertRaises(UnsupportedDockerRegistryError) as context:
+            Plugin(*[], **{'registry': test_registry})
+        self.assertEqual(context.exception.kwargs['registry'], test_registry)
 
-    def test_tag_invalid_image_name_error(self) -> None:
+    def test_ecr_plugin_choice(self) -> None:
         """
-        Test if InvalidDockerImageNameError is thrown an invalid Docker image name is provided.
+        Ensure that plugin type registry_rigel_plugin.registries.ECRPlugin
+        is selected if 'ecr' is specified.
         """
-        image = 'invalid:image:name'
+        plugin = Plugin(*[], **{'registry': 'ecr'})
+        self.assertEqual(plugin.plugin_type, ECRPlugin)
 
-        plugin_data = copy.deepcopy(self.base_plugin_data)
-        plugin_data['image'] = image
-
-        with self.assertRaises(InvalidDockerImageNameError) as context:
-            plugin = Plugin(**plugin_data)
-            plugin.tag(MagicMock())
-        self.assertEqual(context.exception.kwargs['image'], image)
-
-    def test_tag_image_not_found_error(self) -> None:
+    def test_generic_plugin_choice_gitlab(self) -> None:
         """
-        Test if DockerImageNotFoundError is thrown if image to be tagged does not exist.
+        Ensure that plugin type registry_rigel_plugin.registries.GenericDockerRegistryPlugin
+        is selected if 'gitlab' is specified.
         """
-        image = 'unknown_image:latest'
+        plugin = Plugin(*[], **{'registry': 'gitlab'})
+        self.assertEqual(plugin.plugin_type, GenericDockerRegistryPlugin)
 
-        plugin_data = copy.deepcopy(self.base_plugin_data)
-        plugin_data['image'] = image
-
-        docker_client_mock = MagicMock()
-        docker_client_mock.tag.side_effect = docker.errors.ImageNotFound(message='Test error.')
-
-        with self.assertRaises(DockerImageNotFoundError) as context:
-            plugin = Plugin(**plugin_data)
-            plugin.tag(docker_client_mock)
-        self.assertEqual(context.exception.kwargs['image'], image)
-
-    @patch('ecr_rigel_plugin.ecr_rigel_plugin.aws_client')
-    @patch('ecr_rigel_plugin.ecr_rigel_plugin.os.environ.get')
-    def test_undefined_env_var_error(self, environ_mock: Mock, aws_mock: Mock) -> None:
+    def test_generic_plugin_choice_dockerhub(self) -> None:
         """
-        Test if UndefinedEnvironmentVariableError is thrown if an
-        environment variable was left undeclared.
+        Ensure that plugin type registry_rigel_plugin.registries.GenericDockerRegistryPlugin
+        is selected if 'dockerhub' is specified.
         """
-        test_access_key = 'test_access_key'
-        test_environ = {'TEST_ACCESS_KEY': test_access_key}
+        plugin = Plugin(*[], **{'registry': 'dockerhub'})
+        self.assertEqual(plugin.plugin_type, GenericDockerRegistryPlugin)
 
-        environ_mock.side_effect = test_environ.get
-
-        with self.assertRaises(UndefinedEnvironmentVariableError) as context:
-            plugin = Plugin(**self.base_plugin_data)
-            plugin.authenticate(MagicMock())
-        self.assertEqual(context.exception.kwargs['var'], 'TEST_SECRET_ACCESS_KEY')
-
-    @patch('ecr_rigel_plugin.ecr_rigel_plugin.aws_client')
-    @patch('ecr_rigel_plugin.ecr_rigel_plugin.os.environ.get')
-    def test_invalid_credentials_error(self, environ_mock: Mock, aws_mock: Mock) -> None:
+    @patch('registry_rigel_plugin.plugin.ModelBuilder')
+    def test_plugin_run_function_call(self, builder_mock: Mock) -> None:
         """
-        Test if InvalidAWSCredentialsError is thrown if the AWS ECR credentials
-        are not valid.
+        Ensure that if execution is properly delegated to the 'run' function of the selected plugin.
         """
+        test_args = [1, 2, 3]
+        test_kwargs = {'registry': 'gitlab', 'test_key': 'test_value'}
 
-        def stop(*args, **kwargs) -> None:  # type: ignore[no-untyped-def]
-            raise ClientError(
-                error_response=MagicMock(),
-                operation_name=MagicMock()
-            )
+        plugin_mock = MagicMock()
 
-        environ_mock.return_value = 'test_value'
-        aws_mock.side_effect = stop
+        builder_instance_mock = MagicMock()
+        builder_instance_mock.build.return_value = plugin_mock
+        builder_mock.return_value = builder_instance_mock
 
-        with self.assertRaises(InvalidAWSCredentialsError):
-            plugin = Plugin(**self.base_plugin_data)
-            plugin.authenticate(MagicMock())
+        plugin = Plugin(*test_args, **test_kwargs)
+        plugin.run()
 
-    @patch('ecr_rigel_plugin.ecr_rigel_plugin.aws_client')
-    @patch('ecr_rigel_plugin.ecr_rigel_plugin.os.environ.get')
-    def test_token_decoding(self, environ_mock: Mock, aws_mock: Mock) -> None:
-        """
-        Test if AWS ECR token is properly decoded.
-        """
-        environ_mock.return_value = 'test_value'
-
-        decoded_test_token = 'test_token'
-        aws_ecr_mock = MagicMock()
-        aws_ecr_mock.get_authorization_token.return_value = {
-            'authorizationData': [
-                {
-                    'authorizationToken': base64.b64encode(f'AWS:{decoded_test_token}'.encode())
-                }
-            ]
-        }
-        aws_mock.return_value = aws_ecr_mock
-
-        plugin = Plugin(**self.base_plugin_data)
-        plugin.authenticate(MagicMock())
-
-        self.assertEqual(plugin._token, decoded_test_token)
-
-    @patch('ecr_rigel_plugin.ecr_rigel_plugin.aws_client')
-    @patch('ecr_rigel_plugin.ecr_rigel_plugin.os.environ.get')
-    def test_invalid_registry_error(self, environ_mock: Mock, aws_mock: Mock) -> None:
-        """
-        Test if InvalidImageRegistryError is thrown whenever
-        an invalid registry is provided.
-        """
-        environ_mock.return_value = 'test_value'
-
-        aws_ecr_mock = MagicMock()
-        aws_ecr_mock.get_authorization_token.return_value = {
-            'authorizationData': [
-                {
-                    'authorizationToken': base64.b64encode('AWS:test_token'.encode())
-                }
-            ]
-        }
-        aws_mock.return_value = aws_ecr_mock
-
-        docker_client_mock = MagicMock()
-        docker_client_mock.login.side_effect = docker.errors.APIError(message='Test error message.')
-
-        with self.assertRaises(InvalidImageRegistryError) as context:
-            plugin = Plugin(**self.base_plugin_data)
-            plugin.authenticate(docker_client_mock)
-
-        self.assertEqual(context.exception.kwargs['registry'], plugin.registry)
-
-    def test_docker_push_error(self) -> None:
-        """
-        Test if DockerPushError is thrown if an error occurs while
-        pushing Docker image.
-        """
-        error_message = 'Test error message.'
-
-        docker_client_mock = MagicMock()
-        docker_client_mock.push.return_value = [{'error': error_message}]
-
-        with self.assertRaises(DockerPushError) as context:
-            plugin = Plugin(**self.base_plugin_data)
-            plugin._token = 'test_token'
-            plugin.deploy(docker_client_mock)
-        self.assertEqual(context.exception.kwargs['msg'], error_message)
+        builder_mock.assert_called_once_with(plugin.plugin_type)
+        builder_instance_mock.build.assert_called_once_with(plugin.args, plugin.kwargs)
+        plugin_mock.run.assert_called_once()
 
 
 if __name__ == '__main__':

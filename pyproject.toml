@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "ecr_rigel_plugin"
+name = "registry_rigel_plugin"
 version = "0.1.0"
-description = "A plugin for Rigel to deploy Docker images to AWS ECR."
+description = "A plugin for Rigel to deploy Docker images to Docker image registries."
 homepage = "https://gitlab.inesctec.pt/pedro.m.melo/ecr_rigel_plugin"
-keywords = ["rigel", "aws", "ecr"]
+keywords = ["rigel", "docker", "aws", "ecr"]
 authors = ["Pedro Miguel Melo <pedro.m.melo@inesctec.pt>"]
 maintainers = ["Pedro Miguel Melo <pedro.m.melo@inesctec.pt>"]
 readme = "README.md"
@@ -20,22 +20,22 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
 boto3 = "^1.20.52"
 docker = "^5.0.3"
-rigel = {git = "ssh://git@gitlab.inesctec.pt/pedro.m.melo/rigel.git"}
 pydantic = "^1.9.0"
+python = "^3.8"
+rigelcore = {git = "ssh://git@gitlab.inesctec.pt/pedro.m.melo/rigelcore"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.0.0"
-unittest = "^0.0"
-flake8 = "^4.0.1"
 coverage = {extras = ["toml"], version = "^6.3.1"}
-mypy = "^0.931"
+flake8 = "^4.0.1"
 flake8-bugbear = "^22.1.11"
-pre-commit = "^2.17.0"
+mypy = "^0.931"
 nox = "^2022.1.7"
+pre-commit = "^2.17.0"
+pytest = "^7.0.0"
 twine = "^3.8.0"
+unittest = "^0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

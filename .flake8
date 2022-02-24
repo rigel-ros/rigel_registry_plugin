@@ -3,9 +3,10 @@ max-line-length = 120
 max-complexity = 10
 exclude = [
     .git,
+    .mypy_cache
     .nox,
     .pytest_cache,
-    .mypy_cache
+    .venv,
     __pycache__,
     *.egg-info,
     build,
