@@ -5,7 +5,6 @@ from registry_rigel_plugin.registries import (
     ECRPlugin,
     GenericDockerRegistryPlugin
 )
-from rigelcore.exceptions import MissingRequiredFieldError
 from unittest.mock import MagicMock, Mock, patch
 
 
@@ -22,15 +21,6 @@ class PluginTesting(unittest.TestCase):
 
         signature = inspect.signature(Plugin.run)
         self.assertEqual(len(signature.parameters), 1)
-
-    def test_missing_required_field_error(self) -> None:
-        """
-        Ensure that instances of MissingRequiredFieldError are thrown
-        if field 'registry' is not provided to the plugin.
-        """
-        with self.assertRaises(MissingRequiredFieldError) as context:
-            Plugin(*[], **{})
-        self.assertEqual(context.exception.kwargs['field'], 'registry')
 
     def test_ecr_plugin_choice(self) -> None:
         """

@@ -1,7 +1,6 @@
 from registry_rigel_plugin.registries import ECRPlugin, GenericDockerRegistryPlugin
 from rigelcore.clients import DockerClient
 from rigelcore.loggers import MessageLogger
-from rigelcore.exceptions import MissingRequiredFieldError
 from rigelcore.models import ModelBuilder
 from typing import Any, Type
 
@@ -26,11 +25,9 @@ class Plugin:
         self.args: Any = args
         self.kwargs: Any = kwargs
 
-        registry_name = kwargs.get('registry')
-        if registry_name is None:
-            raise MissingRequiredFieldError(field='registry')
+        registry_name = kwargs.get('registry') or ''
 
-        elif registry_name == 'ecr':
+        if registry_name == 'ecr':
             self.plugin_type = ECRPlugin
         else:
             self.plugin_type = GenericDockerRegistryPlugin
