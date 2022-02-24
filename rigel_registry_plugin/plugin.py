@@ -1,4 +1,4 @@
-from registry_rigel_plugin.registries import ECRPlugin, GenericDockerRegistryPlugin
+from rigel_registry_plugin.registries import ECRPlugin, GenericDockerRegistryPlugin
 from rigelcore.clients import DockerClient
 from rigelcore.loggers import MessageLogger
 from rigelcore.models import ModelBuilder

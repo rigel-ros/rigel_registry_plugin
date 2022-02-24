@@ -1,5 +1,5 @@
 import unittest
-from registry_rigel_plugin.exceptions import (
+from rigel_registry_plugin.exceptions import (
     InvalidAWSCredentialsError,
 )
 

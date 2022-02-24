@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "registry_rigel_plugin"
+name = "rigel_registry_plugin"
 version = "0.1.3"
 description = "A plugin for Rigel to deploy Docker images to Docker image registries."
 homepage = "https://gitlab.inesctec.pt/pedro.m.melo/ecr_rigel_plugin"

@@ -2,8 +2,8 @@ import base64
 import copy
 import unittest
 from botocore.exceptions import ClientError
-from registry_rigel_plugin.exceptions import InvalidAWSCredentialsError
-from registry_rigel_plugin.registries import ECRPlugin
+from rigel_registry_plugin.exceptions import InvalidAWSCredentialsError
+from rigel_registry_plugin.registries import ECRPlugin
 from rigelcore.exceptions import UndeclaredEnvironmentVariableError
 from typing import Dict, List
 from unittest.mock import MagicMock, Mock, patch
@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 class ECRPluginTesting(unittest.TestCase):
     """
-    Test suite for the registry_rigel_plugin.registries.ECRPlugin class.
+    Test suite for the rigel_registry_plugin.registries.ECRPlugin class.
     """
 
     base_plugin_data = {
@@ -49,7 +49,7 @@ class ECRPluginTesting(unittest.TestCase):
             )
         )
 
-    @patch('registry_rigel_plugin.registries.ecr.os.environ.get')
+    @patch('rigel_registry_plugin.registries.ecr.os.environ.get')
     def test_undeclared_environment_variable_error(self, environ_mock: Mock) -> None:
         """
         Test if UndeclaredEnvironmentVariableError is thrown
@@ -65,8 +65,8 @@ class ECRPluginTesting(unittest.TestCase):
             plugin.authenticate()
         self.assertEqual(context.exception.kwargs['env'], 'TEST_SECRET_ACCESS_KEY')
 
-    @patch('registry_rigel_plugin.registries.ecr.aws_client')
-    @patch('registry_rigel_plugin.registries.ecr.os.environ.get')
+    @patch('rigel_registry_plugin.registries.ecr.aws_client')
+    @patch('rigel_registry_plugin.registries.ecr.os.environ.get')
     def test_invalid_credentials_error(self, environ_mock: Mock, aws_mock: Mock) -> None:
         """
         Test if InvalidAWSCredentialsError is thrown
@@ -86,8 +86,8 @@ class ECRPluginTesting(unittest.TestCase):
             plugin = ECRPlugin(*[], **self.base_plugin_data)
             plugin.authenticate()
 
-    @patch('registry_rigel_plugin.registries.ecr.aws_client')
-    @patch('registry_rigel_plugin.registries.ecr.os.environ.get')
+    @patch('rigel_registry_plugin.registries.ecr.aws_client')
+    @patch('rigel_registry_plugin.registries.ecr.os.environ.get')
     def test_token_decoding(self, environ_mock: Mock, aws_mock: Mock) -> None:
         """
         Test if AWS ECR token is properly decoded.
@@ -110,8 +110,8 @@ class ECRPluginTesting(unittest.TestCase):
 
         self.assertEqual(plugin._token, decoded_test_token)
 
-    @patch('registry_rigel_plugin.registries.ecr.aws_client')
-    @patch('registry_rigel_plugin.registries.ecr.os.environ.get')
+    @patch('rigel_registry_plugin.registries.ecr.aws_client')
+    @patch('rigel_registry_plugin.registries.ecr.os.environ.get')
     def test_authenticate_call(self, environ_mock: Mock, aws_mock: Mock) -> None:
         """
         Test if function 'authenticate' interfaces as expected with rigelcore.clients.DockerClient class.

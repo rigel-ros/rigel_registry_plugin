@@ -1,13 +1,13 @@
 import copy
 import unittest
-from registry_rigel_plugin.registries import GenericDockerRegistryPlugin
+from rigel_registry_plugin.registries import GenericDockerRegistryPlugin
 from rigelcore.exceptions import UndeclaredEnvironmentVariableError
 from unittest.mock import MagicMock, Mock, patch
 
 
 class GenericDockerRegistryPluginTesting(unittest.TestCase):
     """
-    Test suite for the registry_rigel_plugin.registries.GenericDockerRegistryPlugin class.
+    Test suite for the rigel_registry_plugin.registries.GenericDockerRegistryPlugin class.
     """
 
     base_plugin_data = {
@@ -39,7 +39,7 @@ class GenericDockerRegistryPluginTesting(unittest.TestCase):
             f"{test_data['registry']}/{test_data['image']}"
         )
 
-    @patch('registry_rigel_plugin.registries.generic.os.environ.get')
+    @patch('rigel_registry_plugin.registries.generic.os.environ.get')
     def test_undeclared_environment_variable_error(self, environ_mock: Mock) -> None:
         """
         Test if UndeclaredEnvironmentVariableError is thrown
@@ -55,7 +55,7 @@ class GenericDockerRegistryPluginTesting(unittest.TestCase):
             plugin.authenticate()
         self.assertEqual(context.exception.kwargs['env'], 'TEST_PASSWORD')
 
-    @patch('registry_rigel_plugin.registries.generic.os.environ.get')
+    @patch('rigel_registry_plugin.registries.generic.os.environ.get')
     def test_authenticate_call(self, environ_mock: Mock) -> None:
         """
         Test if function 'authenticate' interfaces as expected

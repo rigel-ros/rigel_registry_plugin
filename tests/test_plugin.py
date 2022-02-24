@@ -1,7 +1,7 @@
 import inspect
 import unittest
-from registry_rigel_plugin import Plugin
-from registry_rigel_plugin.registries import (
+from rigel_registry_plugin import Plugin
+from rigel_registry_plugin.registries import (
     ECRPlugin,
     GenericDockerRegistryPlugin
 )
@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 class PluginTesting(unittest.TestCase):
     """
-    Test suite for the registry_rigel_plugin.Plugin class.
+    Test suite for the rigel_registry_plugin.Plugin class.
     """
 
     def test_compliant(self) -> None:
@@ -24,7 +24,7 @@ class PluginTesting(unittest.TestCase):
 
     def test_ecr_plugin_choice(self) -> None:
         """
-        Ensure that plugin type registry_rigel_plugin.registries.ECRPlugin
+        Ensure that plugin type rigel_registry_plugin.registries.ECRPlugin
         is selected if 'ecr' is specified.
         """
         plugin = Plugin(*[], **{'registry': 'ecr'})
@@ -32,7 +32,7 @@ class PluginTesting(unittest.TestCase):
 
     def test_generic_plugin_choice_gitlab(self) -> None:
         """
-        Ensure that plugin type registry_rigel_plugin.registries.GenericDockerRegistryPlugin
+        Ensure that plugin type rigel_registry_plugin.registries.GenericDockerRegistryPlugin
         is selected if 'gitlab' is specified.
         """
         plugin = Plugin(*[], **{'registry': 'gitlab'})
@@ -40,13 +40,13 @@ class PluginTesting(unittest.TestCase):
 
     def test_generic_plugin_choice_dockerhub(self) -> None:
         """
-        Ensure that plugin type registry_rigel_plugin.registries.GenericDockerRegistryPlugin
+        Ensure that plugin type rigel_registry_plugin.registries.GenericDockerRegistryPlugin
         is selected if 'dockerhub' is specified.
         """
         plugin = Plugin(*[], **{'registry': 'dockerhub'})
         self.assertEqual(plugin.plugin_type, GenericDockerRegistryPlugin)
 
-    @patch('registry_rigel_plugin.plugin.ModelBuilder')
+    @patch('rigel_registry_plugin.plugin.ModelBuilder')
     def test_plugin_run_function_call(self, builder_mock: Mock) -> None:
         """
         Ensure that if execution is properly delegated to the 'run' function of the selected plugin.

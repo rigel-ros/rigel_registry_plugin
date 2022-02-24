@@ -2,7 +2,7 @@ import base64
 import os
 from boto3 import client as aws_client
 from botocore.exceptions import ClientError
-from registry_rigel_plugin.exceptions import InvalidAWSCredentialsError
+from rigel_registry_plugin.exceptions import InvalidAWSCredentialsError
 from pydantic import BaseModel, PrivateAttr
 from rigelcore.clients import DockerClient
 from rigelcore.exceptions import UndeclaredEnvironmentVariableError
