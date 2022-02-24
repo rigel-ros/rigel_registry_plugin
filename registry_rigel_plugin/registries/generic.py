@@ -31,15 +31,15 @@ class GenericDockerRegistryPlugin(BaseModel):
     :type local_image: string
     :ivar local_image: The name of the image to deploy
     :type registry: string
-    :ivar registry: The Docker image registry.
+    :ivar registry: The Docker image registry. Defaults to DockerHub.
     """
     # List of required fields.
     credentials: GenericCredentials
     image: str
-    registry: str
 
     # List of optional fields.
     local_image: str = 'rigel:temp'
+    registry: str = ''  # defaults to DockerHub
 
     # List of private fields.
     _complete_image_name: str = PrivateAttr()
