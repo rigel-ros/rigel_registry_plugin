@@ -1,4 +1,3 @@
-from registry_rigel_plugin.exceptions import UnsupportedDockerRegistryError
 from registry_rigel_plugin.registries import ECRPlugin, GenericDockerRegistryPlugin
 from rigelcore.clients import DockerClient
 from rigelcore.loggers import MessageLogger
@@ -31,15 +30,10 @@ class Plugin:
         if registry_name is None:
             raise MissingRequiredFieldError(field='registry')
 
-        registry_name = registry_name.lower()
-        if registry_name in ['gitlab', 'dockerhub']:
-            self.plugin_type = GenericDockerRegistryPlugin
-
         elif registry_name == 'ecr':
             self.plugin_type = ECRPlugin
-
         else:
-            raise UnsupportedDockerRegistryError(registry=registry_name)
+            self.plugin_type = GenericDockerRegistryPlugin
 
         # Inject complex fields.
         self.kwargs['docker_client'] = DockerClient()

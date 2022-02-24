@@ -1,7 +1,6 @@
 import inspect
 import unittest
 from registry_rigel_plugin import Plugin
-from registry_rigel_plugin.exceptions import UnsupportedDockerRegistryError
 from registry_rigel_plugin.registries import (
     ECRPlugin,
     GenericDockerRegistryPlugin
@@ -32,16 +31,6 @@ class PluginTesting(unittest.TestCase):
         with self.assertRaises(MissingRequiredFieldError) as context:
             Plugin(*[], **{})
         self.assertEqual(context.exception.kwargs['field'], 'registry')
-
-    def test_unsupported_docker_registry_error(self) -> None:
-        """
-        Ensure that instances of UnsupportedDockerRegistryError are thrown
-        if an unsupported registry in specified.
-        """
-        test_registry = 'test_registry'
-        with self.assertRaises(UnsupportedDockerRegistryError) as context:
-            Plugin(*[], **{'registry': test_registry})
-        self.assertEqual(context.exception.kwargs['registry'], test_registry)
 
     def test_ecr_plugin_choice(self) -> None:
         """
