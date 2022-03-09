@@ -1,8 +1,9 @@
 import base64
 import os
 from boto3 import client as aws_client
-from botocore.exceptions import ClientError
-from rigel_registry_plugin.exceptions import InvalidAWSCredentialsError
+from boto3.exceptions import Boto3Error
+from botocore.exceptions import BotoCoreError
+from rigel_registry_plugin.exceptions import AWSBotoError
 from pydantic import BaseModel, PrivateAttr
 from rigelcore.clients import DockerClient
 from rigelcore.exceptions import UndeclaredEnvironmentVariableError
@@ -115,8 +116,8 @@ class ECRPlugin(BaseModel):
             encoded_token = aws_ecr.get_authorization_token()['authorizationData'][0]['authorizationToken']
             self._token = base64.b64decode(encoded_token).replace(b'AWS:', b'').decode('utf-8')
 
-        except ClientError:
-            raise InvalidAWSCredentialsError()
+        except (Boto3Error, BotoCoreError) as exception:
+            raise AWSBotoError(exception=exception)
 
         # Authenticate with AWS ECR.registry
         self._docker_client.login(self._registry, self.user, self._token)

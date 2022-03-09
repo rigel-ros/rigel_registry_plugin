@@ -1,9 +1,12 @@
 from rigelcore.exceptions import RigelError
 
 
-class InvalidAWSCredentialsError(RigelError):
+class AWSBotoError(RigelError):
     """
-    Raised whenever an attempt is made to authenticate with AWS ECR using invalid access credentials.
+    Raised wheneve an error occurs while making 'boto' API calls.
+
+    :type exception: Union[botocore.exceptions.BotoCoreError, boto3.exceptions.Boto3Error]
+    :type exception: The exception thrown by the API call.
     """
-    base = "Invalid AWS access credentials. Unable to authenticate with AWS ECR."
+    base = "An error occurred: {exception}"
     code = 50

@@ -1,11 +1,10 @@
 import base64
 import copy
 import unittest
-from botocore.exceptions import ClientError
-from rigel_registry_plugin.exceptions import InvalidAWSCredentialsError
+from botocore.exceptions import BotoCoreError
+from rigel_registry_plugin.exceptions import AWSBotoError
 from rigel_registry_plugin.registries import ECRPlugin
 from rigelcore.exceptions import UndeclaredEnvironmentVariableError
-from typing import Dict, List
 from unittest.mock import MagicMock, Mock, patch
 
 
@@ -69,22 +68,18 @@ class ECRPluginTesting(unittest.TestCase):
     @patch('rigel_registry_plugin.registries.ecr.os.environ.get')
     def test_invalid_credentials_error(self, environ_mock: Mock, aws_mock: Mock) -> None:
         """
-        Test if InvalidAWSCredentialsError is thrown
-        if the AWS ECR credentials are not valid.
+        Test if AWSBotoError is thrown
+        if an error occurs while making Boto API calls to authenticate.
         """
-
-        def stop(*args: List[object], **kwargs: Dict[str, object]) -> None:
-            raise ClientError(
-                error_response=MagicMock(),
-                operation_name=MagicMock()
-            )
+        test_exception = BotoCoreError()
 
         environ_mock.return_value = 'test_value'
-        aws_mock.side_effect = stop
+        aws_mock.side_effect = test_exception
 
-        with self.assertRaises(InvalidAWSCredentialsError):
+        with self.assertRaises(AWSBotoError) as context:
             plugin = ECRPlugin(*[], **self.base_plugin_data)
             plugin.authenticate()
+        self.assertEqual(context.exception.kwargs['exception'], test_exception)
 
     @patch('rigel_registry_plugin.registries.ecr.aws_client')
     @patch('rigel_registry_plugin.registries.ecr.os.environ.get')
