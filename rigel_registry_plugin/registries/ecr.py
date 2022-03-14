@@ -79,7 +79,7 @@ class ECRPlugin(BaseModel):
         """
         Tag existent Docker image to the desired tag.
         """
-        self._docker_client.tag(
+        self._docker_client.tag_image(
             self.local_image,
             self._complete_image_name
         )
@@ -126,7 +126,7 @@ class ECRPlugin(BaseModel):
         """
         Deploy Docker image to AWS ECR.
         """
-        self._docker_client.push(self._complete_image_name)
+        self._docker_client.push_image(self._complete_image_name)
 
     def run(self) -> None:
         """

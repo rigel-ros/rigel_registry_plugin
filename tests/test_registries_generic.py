@@ -34,7 +34,7 @@ class GenericDockerRegistryPluginTesting(unittest.TestCase):
 
         plugin = GenericDockerRegistryPlugin(*[], **test_data)
         plugin.tag()
-        docker_mock.tag.assert_called_once_with(
+        docker_mock.tag_image.assert_called_once_with(
             test_data['local_image'],
             f"{test_data['registry']}/{test_data['image']}"
         )
@@ -88,7 +88,7 @@ class GenericDockerRegistryPluginTesting(unittest.TestCase):
 
         plugin = GenericDockerRegistryPlugin(*[], **test_data)
         plugin.deploy()
-        docker_mock.push.assert_called_once_with(
+        docker_mock.push_image.assert_called_once_with(
             f"{test_data['registry']}/{test_data['image']}"
         )
 

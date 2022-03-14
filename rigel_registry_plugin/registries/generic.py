@@ -62,7 +62,7 @@ class GenericDockerRegistryPlugin(BaseModel):
         """
         Tag existent Docker image to the desired tag.
         """
-        self._docker_client.tag(
+        self._docker_client.tag_image(
             self.local_image,
             self._complete_image_name
         )
@@ -95,7 +95,7 @@ class GenericDockerRegistryPlugin(BaseModel):
         """
         Deploy Docker image to the specified Docker image registry.
         """
-        self._docker_client.push(
+        self._docker_client.push_image(
             self._complete_image_name
         )
 
