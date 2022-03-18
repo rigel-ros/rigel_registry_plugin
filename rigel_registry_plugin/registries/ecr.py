@@ -140,3 +140,9 @@ class ECRPlugin(BaseModel):
 
         self.deploy()
         self._logger.info(f'Docker image {self._complete_image_name} was pushed with success to AWS ECR.')
+
+    def stop(self) -> None:
+        """
+        Plugin graceful closing mechanism.
+        """
+        pass

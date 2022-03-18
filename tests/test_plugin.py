@@ -13,16 +13,27 @@ class PluginTesting(unittest.TestCase):
     Test suite for the rigel_registry_plugin.Plugin class.
     """
 
-    def test_compliant(self) -> None:
+    def test_run_compliant(self) -> None:
         """
-        Ensure that Plugin class has required 'run' function.
+        Ensure that Plugin class has required 'run' functions.
         """
         self.assertTrue('run' in Plugin.__dict__)
 
-        signature = inspect.signature(Plugin.run)
-        self.assertEqual(len(signature.parameters), 1)
+        run_signature = inspect.signature(Plugin.run)
+        self.assertEqual(len(run_signature.parameters), 1)
 
-    def test_ecr_plugin_choice(self) -> None:
+    def test_stop_compliant(self) -> None:
+        """
+        Ensure that Plugin class has required 'stop' function.
+        """
+        self.assertTrue('stop' in Plugin.__dict__)
+
+        stop_signature = inspect.signature(Plugin.stop)
+        self.assertEqual(len(stop_signature.parameters), 1)
+
+    @patch('rigel_registry_plugin.plugin.DockerClient')
+    @patch('rigel_registry_plugin.plugin.ModelBuilder')
+    def test_ecr_plugin_choice(self, builder_mock: Mock, docker_mock: Mock) -> None:
         """
         Ensure that plugin type rigel_registry_plugin.registries.ECRPlugin
         is selected if 'ecr' is specified.
@@ -30,7 +41,9 @@ class PluginTesting(unittest.TestCase):
         plugin = Plugin(*[], **{'registry': 'ecr'})
         self.assertEqual(plugin.plugin_type, ECRPlugin)
 
-    def test_generic_plugin_choice_gitlab(self) -> None:
+    @patch('rigel_registry_plugin.plugin.DockerClient')
+    @patch('rigel_registry_plugin.plugin.ModelBuilder')
+    def test_generic_plugin_choice_gitlab(self, builder_mock: Mock, docker_mock: Mock) -> None:
         """
         Ensure that plugin type rigel_registry_plugin.registries.GenericDockerRegistryPlugin
         is selected if 'gitlab' is specified.
@@ -38,7 +51,9 @@ class PluginTesting(unittest.TestCase):
         plugin = Plugin(*[], **{'registry': 'gitlab'})
         self.assertEqual(plugin.plugin_type, GenericDockerRegistryPlugin)
 
-    def test_generic_plugin_choice_dockerhub(self) -> None:
+    @patch('rigel_registry_plugin.plugin.DockerClient')
+    @patch('rigel_registry_plugin.plugin.ModelBuilder')
+    def test_generic_plugin_choice_dockerhub(self, builder_mock: Mock, docker_mock: Mock) -> None:
         """
         Ensure that plugin type rigel_registry_plugin.registries.GenericDockerRegistryPlugin
         is selected if 'dockerhub' is specified.
@@ -46,26 +61,61 @@ class PluginTesting(unittest.TestCase):
         plugin = Plugin(*[], **{'registry': 'dockerhub'})
         self.assertEqual(plugin.plugin_type, GenericDockerRegistryPlugin)
 
+    @patch('rigel_registry_plugin.plugin.MessageLogger')
+    @patch('rigel_registry_plugin.plugin.DockerClient')
     @patch('rigel_registry_plugin.plugin.ModelBuilder')
-    def test_plugin_run_function_call(self, builder_mock: Mock) -> None:
+    def test_plugin_initialization(self, builder_mock: Mock, docker_mock: Mock, logger_mock: Mock) -> None:
         """
-        Ensure that if execution is properly delegated to the 'run' function of the selected plugin.
+        Ensure that creation of plugin instances works as expected.
         """
         test_args = [1, 2, 3]
-        test_kwargs = {'registry': 'gitlab', 'test_key': 'test_value'}
+        test_kwargs = {'registry': 'test_registry'}
 
+        plugin_instance_mock = MagicMock()
+        builder_mock.return_value = plugin_instance_mock
+
+        plugin = Plugin(*test_args, **test_kwargs)
+        plugin.run()
+
+        test_kwargs['docker_client'] = plugin.kwargs['docker_client']
+        test_kwargs['logger'] = plugin.kwargs['logger']
+
+        builder_mock.assert_called_once_with(plugin.plugin_type)
+        plugin_instance_mock.build.assert_called_once_with(tuple(test_args), test_kwargs)
+
+    @patch('rigel_registry_plugin.plugin.DockerClient')
+    @patch('rigel_registry_plugin.plugin.ModelBuilder')
+    def test_plugin_run_function_call(self, builder_mock: Mock, docker_mock: Mock) -> None:
+        """
+        Ensure that execution is properly delegated to the 'run' function of the selected plugin.
+        """
         plugin_mock = MagicMock()
 
         builder_instance_mock = MagicMock()
         builder_instance_mock.build.return_value = plugin_mock
         builder_mock.return_value = builder_instance_mock
 
-        plugin = Plugin(*test_args, **test_kwargs)
+        plugin = Plugin(*[], **{})
         plugin.run()
 
-        builder_mock.assert_called_once_with(plugin.plugin_type)
-        builder_instance_mock.build.assert_called_once_with(plugin.args, plugin.kwargs)
         plugin_mock.run.assert_called_once()
+
+    @patch('rigel_registry_plugin.plugin.DockerClient')
+    @patch('rigel_registry_plugin.plugin.ModelBuilder')
+    def test_plugin_stop_function_call(self, builder_mock: Mock, docker_mock: Mock) -> None:
+        """
+        Ensure that execution is properly delegated to the 'stop' function of the selected plugin.
+        """
+        plugin_mock = MagicMock()
+
+        builder_instance_mock = MagicMock()
+        builder_instance_mock.build.return_value = plugin_mock
+        builder_mock.return_value = builder_instance_mock
+
+        plugin = Plugin(*[], **{})
+        plugin.stop()
+
+        plugin_mock.stop.assert_called_once()
 
 
 if __name__ == '__main__':

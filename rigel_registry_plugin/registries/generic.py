@@ -114,3 +114,9 @@ class GenericDockerRegistryPlugin(BaseModel):
             self._complete_image_name,
             self.registry or 'DockerHub'
         ))
+
+    def stop(self) -> None:
+        """
+        Plugin graceful closing mechanism.
+        """
+        pass

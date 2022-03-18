@@ -36,10 +36,18 @@ class Plugin:
         self.kwargs['docker_client'] = DockerClient()
         self.kwargs['logger'] = MessageLogger()
 
+        # Build an instance of the specified plugin.
+        builder = ModelBuilder(self.plugin_type)
+        self.plugin = builder.build(self.args, self.kwargs)
+
     def run(self) -> None:
         """
         Delegate execution to adequate plugin.
         """
-        builder = ModelBuilder(self.plugin_type)
-        plugin = builder.build(self.args, self.kwargs)
-        plugin.run()
+        self.plugin.run()
+
+    def stop(self) -> None:
+        """
+        Delegate resources cleanup to adequate plugin.
+        """
+        self.plugin.stop()
